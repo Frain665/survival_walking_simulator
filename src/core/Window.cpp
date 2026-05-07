@@ -1,5 +1,6 @@
 #include "Window.h"
 
+#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
 #include <stdexcept>
@@ -45,6 +46,14 @@ namespace core
 
 		glfwMakeContextCurrent(m_windowHandle);
 		glfwSwapInterval(1);
+
+		if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress)))
+		{
+			shutdown();
+			throw std::runtime_error("Failed to initialize GLAD");
+		}
+
+		glViewport(0, 0, m_width, m_height);
 	}
 
 	void Window::pollEvents() const noexcept
