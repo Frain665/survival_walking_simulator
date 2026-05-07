@@ -55,21 +55,17 @@ namespace core::physics
 		onGround = false;
 		glm::vec3 resolved{ 0.0f };
 
-		// --- Ось X ---
 		resolved.x = resolveAxis(box, delta.x, 0);
 
 		// Сдвигаем AABB по X для следующей проверки
 		AABB boxAfterX = box.translated({ resolved.x, 0.0f, 0.0f });
 
-		// --- Ось Z ---
 		resolved.z = resolveAxis(boxAfterX, delta.z, 2);
 
 		AABB boxAfterXZ = boxAfterX.translated({ 0.0f, 0.0f, resolved.z });
 
-		// --- Ось Y ---
 		float resolvedY = resolveAxis(boxAfterXZ, delta.y, 1);
 
-		// Если хотели двигаться вниз, но Y был скорректирован → стоим на земле
 		if (delta.y < 0.0f && std::abs(resolvedY) < std::abs(delta.y))
 		{
 			onGround = true;
@@ -88,7 +84,6 @@ namespace core::physics
 	{
 		if (std::abs(delta) < 1e-6f) return 0.0f;
 
-		// Строим swept-AABB: объединение текущего и смещённого положения
 		glm::vec3 movement{ 0.0f };
 		movement[axis] = delta;
 
@@ -96,15 +91,12 @@ namespace core::physics
 		swept.min = glm::min(box.min, box.min + movement);
 		swept.max = glm::max(box.max, box.max + movement);
 
-		// Проверяем только те коллайдеры, что попадают в swept-регион
 		for (const auto& collider : m_staticColliders)
 		{
 			if (!swept.overlaps(collider)) continue;
 
-			// Глубина проникновения по данной оси
 			if (delta > 0.0f)
 			{
-				// Движение в плюс: упираемся в min коллайдера
 				float overlap = collider.min[axis] - box.max[axis];
 				if (overlap < delta)
 				{
@@ -113,7 +105,6 @@ namespace core::physics
 			}
 			else
 			{
-				// Движение в минус: упираемся в max коллайдера
 				float overlap = collider.max[axis] - box.min[axis];
 				if (overlap > delta)
 				{
