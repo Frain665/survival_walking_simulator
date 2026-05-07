@@ -7,8 +7,8 @@
 namespace core::entities
 {
 	Player::Player(physics::PhysicsWorld& physicsWorld,
-	               renderer::Camera&      camera,
-	               glm::vec3              spawnPos) noexcept
+		renderer::Camera& camera,
+		glm::vec3              spawnPos) noexcept
 		: m_physicsWorld(physicsWorld)
 		, m_camera(camera)
 		, m_position(spawnPos)
@@ -16,23 +16,15 @@ namespace core::entities
 		m_camera.setPosition(getEyePosition());
 	}
 
-	// -----------------------------------------------------------------------
-	// Основной update
-	// -----------------------------------------------------------------------
-
 	void Player::update(const Input& input, float deltaTime) noexcept
 	{
 		processMouseInput(input);
+		updateCrouch(deltaTime);
 		processMovementInput(input, deltaTime);
 		applyPhysics(deltaTime);
 
-		// Обновляем позицию камеры и аудио-слушателя
 		m_camera.setPosition(getEyePosition());
 	}
-
-	// -----------------------------------------------------------------------
-	// Мышь → поворот камеры
-	// -----------------------------------------------------------------------
 
 	void Player::processMouseInput(const Input& input) noexcept
 	{
@@ -41,7 +33,7 @@ namespace core::entities
 		if (m_firstMouse)
 		{
 			m_lastMousePos = mousePos;
-			m_firstMouse   = false;
+			m_firstMouse = false;
 			return;
 		}
 
@@ -53,14 +45,40 @@ namespace core::entities
 		m_camera.processMouseMovement(dx, dy);
 	}
 
-	// -----------------------------------------------------------------------
-	// Клавиатура → горизонтальная скорость
-	// -----------------------------------------------------------------------
+	void Player::updateCrouch(float deltaTime) noexcept
+	{
+		const float targetHeight = m_crouching ? CROUCH_HEIGHT : PLAYER_HEIGHT;
+		const float targetEyeHeight = m_crouching ? CROUCH_EYE_HEIGHT : EYE_HEIGHT;
+
+		const float speed = CROUCH_TRANSITION_SPEED * deltaTime;
+
+		m_currentHeight += (targetHeight - m_currentHeight) * speed;
+		m_currentEyeHeight += (targetEyeHeight - m_currentEyeHeight) * speed;
+
+		if (std::abs(m_currentHeight - targetHeight) < 0.001f) m_currentHeight = targetHeight;
+		if (std::abs(m_currentEyeHeight - targetEyeHeight) < 0.001f) m_currentEyeHeight = targetEyeHeight;
+	}
 
 	void Player::processMovementInput(const Input& input, float deltaTime) noexcept
 	{
-		m_sprinting = input.isKeyPressed(Key::LeftShift) && m_onGround;
-		const float speed = m_sprinting ? SPRINT_SPEED : WALK_SPEED;
+		const bool wantCrouch = input.isKeyPressed(Key::LeftControl);
+
+		if (wantCrouch)
+		{
+			m_crouching = true;
+			m_sprinting = false;
+		}
+		else if (m_crouching && canUncrouch())
+		{
+			m_crouching = false;
+		}
+
+		if (!m_crouching)
+			m_sprinting = input.isKeyPressed(Key::LeftShift) && m_onGround;
+
+		float speed = WALK_SPEED;
+		if (m_crouching)  speed = CROUCH_SPEED;
+		else if (m_sprinting) speed = SPRINT_SPEED;
 
 		glm::vec3 forward = m_camera.getForward();
 		forward.y = 0.0f;
@@ -84,16 +102,15 @@ namespace core::entities
 		m_velocity.x = moveDir.x * speed * control;
 		m_velocity.z = moveDir.z * speed * control;
 
-		if (input.isKeyJustPressed(Key::Space) && m_onGround)
+		if (input.isKeyJustPressed(Key::Space) && m_onGround && !m_crouching)
 		{
 			m_velocity.y = JUMP_VELOCITY;
-			m_onGround   = false;
+			m_onGround = false;
 		}
-	}
 
-	// -----------------------------------------------------------------------
-	// Физика: гравитация + sweepMove
-	// -----------------------------------------------------------------------
+		// TODO: убрать deltaTime из параметров если он нигде больше не нужен
+		(void)deltaTime;
+	}
 
 	void Player::applyPhysics(float deltaTime) noexcept
 	{
@@ -101,7 +118,6 @@ namespace core::entities
 		{
 			m_velocity.y += m_physicsWorld.getGravity() * deltaTime;
 
-			// Ограничиваем скорость падения (terminal velocity)
 			constexpr float TERMINAL_VELOCITY = -50.0f;
 			m_velocity.y = std::max(m_velocity.y, TERMINAL_VELOCITY);
 		}
@@ -128,17 +144,26 @@ namespace core::entities
 		}
 	}
 
-	// -----------------------------------------------------------------------
-	// Геттеры
-	// -----------------------------------------------------------------------
+	bool Player::canUncrouch() const noexcept
+	{
+		constexpr float halfWidth = PLAYER_WIDTH * 0.5f;
+
+		const physics::AABB standingAABB =
+		{
+			m_position + glm::vec3{ -halfWidth, 0.0f,         -halfWidth },
+			m_position + glm::vec3{  halfWidth, PLAYER_HEIGHT,  halfWidth }
+		};
+
+		return !m_physicsWorld.overlapsAny(standingAABB);
+	}
 
 	physics::AABB Player::getAABB() const noexcept
 	{
 		constexpr float halfWidth = PLAYER_WIDTH * 0.5f;
 		return
 		{
-			m_position + glm::vec3{ -halfWidth, 0.0f,         -halfWidth },
-			m_position + glm::vec3{  halfWidth, PLAYER_HEIGHT,  halfWidth }
+			m_position + glm::vec3{ -halfWidth, 0.0f,            -halfWidth },
+			m_position + glm::vec3{  halfWidth, m_currentHeight,  halfWidth }
 		};
 	}
 
