@@ -25,15 +25,22 @@ find_package(glm        CONFIG REQUIRED)
 find_package(imgui      CONFIG REQUIRED)
 find_package(Stb 		REQUIRED MODULE)       
 find_package(assimp     CONFIG REQUIRED)
-find_package(OpenGL             REQUIRED)
-
-add_library(miniaudio INTERFACE)
-target_include_directories(miniaudio INTERFACE
-    "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/miniaudio"
-)
+find_package(OpenGL     REQUIRED)
 
 # ============================================================
-#  Исходники  (только .cpp — .h не нужны в SOURCES)
+#  СОЗДАНИЕ ФАЙЛА ДЛЯ MINIAUDIO (ВАЖНО!)
+# ============================================================
+# Создаём файл с реализацией miniaudio только один раз
+set(MINIAUDIO_IMPL_FILE "${CMAKE_CURRENT_BINARY_DIR}/miniaudio_impl.cpp")
+if(NOT EXISTS ${MINIAUDIO_IMPL_FILE})
+    file(WRITE ${MINIAUDIO_IMPL_FILE} 
+        "#define MINIAUDIO_IMPLEMENTATION\n"
+        "#include \"miniaudio.h\"\n"
+    )
+endif()
+
+# ============================================================
+#  Исходники (только .cpp — .h не нужны в SOURCES)
 # ============================================================
 set(SOURCES
     src/main.cpp
@@ -106,10 +113,13 @@ set(SOURCES
     src/world/TerrainGenerator.cpp
     src/world/TreeGenerator.cpp
     src/world/World.cpp
+
+    # ВАЖНО: добавляем файл с реализацией miniaudio
+    ${MINIAUDIO_IMPL_FILE}
 )
 
 # ============================================================
-#  Исполняемый файл
+#  Исполняемый файл (ТОЛЬКО ОДИН РАЗ!)
 # ============================================================
 add_executable(${PROJECT_NAME} ${SOURCES})
 
@@ -120,15 +130,12 @@ target_include_directories(${PROJECT_NAME}
     PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/src"       
         "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty"
-		${Stb_INCLUDE_DIR}
-)
-
-target_include_directories(${PROJECT_NAME} 
-	PRIVATE ${Stb_INCLUDE_DIR}
+        "${Stb_INCLUDE_DIR}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/miniaudio"  # ← Добавляем путь к miniaudio.h
 )
 
 # ============================================================
-#  Линковка
+#  Линковка (убираем miniaudio, если это не CMake-цель)
 # ============================================================
 target_link_libraries(${PROJECT_NAME}
     PRIVATE
@@ -138,8 +145,24 @@ target_link_libraries(${PROJECT_NAME}
         glm::glm
         imgui::imgui
         assimp::assimp
-        miniaudio
+        # miniaudio НЕ НУЖНО здесь, т.к. это header-only библиотека
 )
+
+# ============================================================
+#  Системные библиотеки для miniaudio
+# ============================================================
+if(WIN32)
+    target_link_libraries(${PROJECT_NAME} PRIVATE winmm ole32)
+elseif(APPLE)
+    find_library(CORE_AUDIO CoreAudio)
+    find_library(AUDIO_TOOLBOX AudioToolbox)
+    find_library(FOUNDATION Foundation)
+    target_link_libraries(${PROJECT_NAME} PRIVATE 
+        ${CORE_AUDIO} ${AUDIO_TOOLBOX} ${FOUNDATION}
+    )
+elseif(UNIX)
+    target_link_libraries(${PROJECT_NAME} PRIVATE asound dl pthread)
+endif()
 
 # ============================================================
 #  Предупреждения компилятора
@@ -214,4 +237,5 @@ message(STATUS "=== ${PROJECT_NAME} v${PROJECT_VERSION} ===")
 message(STATUS "  Build type : ${CMAKE_BUILD_TYPE}")
 message(STATUS "  C++ std    : ${CMAKE_CXX_STANDARD}")
 message(STATUS "  Compiler   : ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
+message(STATUS "  Miniaudio impl file: ${MINIAUDIO_IMPL_FILE}")
 message(STATUS "")

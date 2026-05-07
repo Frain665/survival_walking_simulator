@@ -9,6 +9,9 @@ struct GLFWwindow;
 namespace core
 {
 	class Window;
+	void glfwKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+	void glfwMouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
+	void glfwCursorPosCallback(GLFWwindow* window, double xpos, double ypos);
 
 	enum class Key : int
 	{
@@ -31,6 +34,21 @@ namespace core
 		MouseLeft   = 0,
 		MouseRight  = 1, 
 		MouseMiddle = 2,
+
+		// Функциональные клавиши
+		F1 = 290,
+		F2 = 291,
+		F3 = 292,
+		F4 = 293,
+		F5 = 294,
+		F6 = 295,
+		F7 = 296,
+		F8 = 297,
+		F9 = 298,
+		F10 = 299,
+		F11 = 300,
+		F12 = 301,
+
 	};
 
 	enum class CursorMode
@@ -101,12 +119,5 @@ namespace core
 		GLFWwindow* m_windowHandle{ nullptr };
 		bool m_firstMouse{ true };
 	};
-
-	extern "C"
-	{
-		void glfwKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
-		void glfwMouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
-		void glfwCursorPosCallback(GLFWwindow* window, double xpos, double ypos);
-	}
 
 } // namespace core

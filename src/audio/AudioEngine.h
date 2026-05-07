@@ -7,6 +7,8 @@
 #include <string>
 #include <string_view>
 #include <expected>
+#include <cstring>
+#include <utility>
 #include <glm/glm.hpp>
 
 namespace core::audio
@@ -61,6 +63,7 @@ namespace core::audio
 		[[nodiscard]] auto isValid() const noexcept -> bool { return m_sound != nullptr; }
 
 		void stop()    noexcept { if (m_sound) ma_sound_stop(m_sound); }
+		void start()   noexcept { if (m_sound) ma_sound_start(m_sound); }
 		void setVolume(float volume) noexcept { if (m_sound) ma_sound_set_volume(m_sound, volume); }
 		void setPitch(float pitch)   noexcept { if (m_sound) ma_sound_set_pitch(m_sound, pitch); }
 		void setLooping(bool loop)   noexcept { if (m_sound) ma_sound_set_looping(m_sound, loop ? MA_TRUE : MA_FALSE); }

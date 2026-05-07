@@ -2,6 +2,7 @@
 
 #include <format>
 #include <iostream> // временно, пока нет логера
+#include <algorithm>
 
 namespace core::audio
 {
@@ -177,10 +178,10 @@ namespace core::audio
 		sound->setVolume(volume * m_sfxVolume * m_masterVolume);
 		sound->setPitch(pitch);
 		// Запускаем воспроизведение
-		if (sound->isValid())
+		/*if (sound->isValid())
 		{
-			ma_sound_start(/* доступ через публичный метод или расширить SoundHandle */);
-		}
+			ma_sound_start( sound.);
+		}*/
 
 		return sound;
 	}

@@ -63,6 +63,7 @@ namespace core
 
 		std::atomic<bool> m_isRunning    { false };
 		bool              m_isInitialized{ false };
+		bool              m_isCursorCaptured{ true };
 	};
 
 } // namespace core

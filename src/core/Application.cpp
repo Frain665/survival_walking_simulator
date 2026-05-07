@@ -1,9 +1,15 @@
 #include "Application.h"
+#include "Window.h"
+#include "Input.h"
 
 #include <chrono>
 #include <algorithm>
+#include <cstdlib>
 #include <format>
 #include <iostream>
+#include <stdexcept>
+
+
 
 namespace core
 {
@@ -22,6 +28,7 @@ namespace core
 
 			// Захватываем курсор сразу (FPS-режим)
 			m_input->setCursorMode(CursorMode::Disabled);
+			m_isCursorCaptured = true;
 
 			// --- Аудио ---
 			m_audio = std::make_unique<audio::AudioEngine>();
@@ -74,7 +81,8 @@ namespace core
 
 	void Application::cleanup() noexcept
 	{
-		if (!m_isInitialized) [[likely]] return;
+		const bool wasInitialized = m_isInitialized;
+		m_isRunning.store(false, std::memory_order_release);
 
 		m_player.reset();
 		m_physicsWorld.reset();
@@ -84,12 +92,23 @@ namespace core
 		m_window.reset();
 
 		m_isInitialized = false;
-		std::cout << "[Application] Cleaned up\n";
+		m_isCursorCaptured = true;
+
+		if (wasInitialized)
+			std::cout << "[Application] Cleaned up\n";
 	}
 
 	auto Application::run() -> int
 	{
-		init();
+		try
+		{
+			init();
+		}
+		catch (const std::exception& e)
+		{
+			std::cerr << std::format("[Application] Startup error: {}\n", e.what());
+			return EXIT_FAILURE;
+		}
 
 		m_isRunning.store(true, std::memory_order_release);
 
@@ -133,7 +152,8 @@ namespace core
 		// F1 — переключение режима курсора (меню / игра)
 		if (m_input->isKeyJustPressed(Key::F1))
 		{
-			// TODO: добавить Key::F1 в enum Key
+			m_isCursorCaptured = !m_isCursorCaptured;
+			m_input->setCursorMode(m_isCursorCaptured ? CursorMode::Disabled : CursorMode::Normal);
 		}
 	}
 
@@ -163,7 +183,7 @@ namespace core
 		//   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		//   m_renderer->beginFrame(*m_camera);
 		//   m_world->render(*m_renderer);
-		//   m_window->swapBuffers();
+		m_window->swapBuffers();
 	}
 
 	// -----------------------------------------------------------------------
@@ -171,7 +191,7 @@ namespace core
 	// -----------------------------------------------------------------------
 	void Application::updateAudioSystem() noexcept
 	{
-		if (!m_audio || !m_player) [[unlikely]] return;
+		if (!m_audio || !m_player || !m_camera) [[unlikely]] return;
 
 		const glm::vec3 eyePos  = m_player->getEyePosition();
 		const glm::vec3 forward = m_camera->getForward();
