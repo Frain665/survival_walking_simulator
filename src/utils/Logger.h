@@ -22,7 +22,7 @@ namespace utils
 		};
 
 	private:
-		static void log(Level level, std::string_veiw message)
+		static void log(Level level, std::string_view message)
 		{
 			if (level < s_level) return;
 
