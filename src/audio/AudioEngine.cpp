@@ -75,7 +75,7 @@ namespace core::audio
 		}
 
 		ma_engine_config config = ma_engine_config_init();
-		config.pLog = nullptr; // logCallback подключается через ma_log отдельно при необходимости
+		config.pLog = nullptr;
 
 		if (ma_engine_init(&config, &m_engine) != MA_SUCCESS)
 		{
@@ -264,7 +264,10 @@ namespace core::audio
 	{
 		if (m_isInitialized)
 		{
-			ma_engine_listener_set_cone(&m_engine, 0, gain, gain, gain); // TODO: уточнить API
+			ma_engine_listener_set_cone(&m_engine, 0,
+				glm::radians(360.0f), 
+				glm::radians(360.0f),
+				gain);
 		}
 	}
 
