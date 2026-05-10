@@ -62,8 +62,6 @@ namespace core
 		{
 			const auto idx = static_cast<size_t>(key);
 			bool result = idx < KEY_COUNT && m_currentKeys.test(idx);
-			if (key == Key::LeftControl)
-				std::cout << "isKeyPressed LeftControl idx=" << idx << " result=" << result << "\n";
 			return result;
 		}
 

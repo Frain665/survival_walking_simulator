@@ -24,6 +24,13 @@ namespace core::entities
 		applyPhysics(deltaTime);
 
 		m_camera.setPosition(getEyePosition());
+
+		const float horizSpeed = std::sqrt(m_velocity.x * m_velocity.x +
+			m_velocity.z * m_velocity.z);
+		const bool isMoving = horizSpeed > 0.5f && m_onGround;
+		const float speedFactor = m_sprinting ? 1.0f : (m_crouching ? 0.3f : 0.7f);
+
+		m_camera.update(deltaTime, speedFactor, isMoving);
 	}
 
 	void Player::processMouseInput(const Input& input) noexcept
@@ -50,13 +57,27 @@ namespace core::entities
 		const float targetHeight = m_crouching ? CROUCH_HEIGHT : PLAYER_HEIGHT;
 		const float targetEyeHeight = m_crouching ? CROUCH_EYE_HEIGHT : EYE_HEIGHT;
 
-		const float speed = CROUCH_TRANSITION_SPEED * deltaTime;
+		const float t = CROUCH_TRANSITION_SPEED * deltaTime;
 
-		m_currentHeight += (targetHeight - m_currentHeight) * speed;
-		m_currentEyeHeight += (targetEyeHeight - m_currentEyeHeight) * speed;
+		m_currentHeight += (targetHeight - m_currentHeight) * t;
+		m_currentEyeHeight += (targetEyeHeight - m_currentEyeHeight) * t;
 
 		if (std::abs(m_currentHeight - targetHeight) < 0.001f) m_currentHeight = targetHeight;
 		if (std::abs(m_currentEyeHeight - targetEyeHeight) < 0.001f) m_currentEyeHeight = targetEyeHeight;
+	}
+
+	void Player::updateSprintSpeed(float deltaTime, float targetSpeed) noexcept
+	{
+		if (m_currentSpeed < targetSpeed)
+		{
+			m_currentSpeed += SPRINT_ACCEL * deltaTime;
+			if (m_currentSpeed > targetSpeed) m_currentSpeed = targetSpeed;
+		}
+		else if (m_currentSpeed > targetSpeed)
+		{
+			m_currentSpeed -= SPRINT_DECEL * deltaTime;
+			if (m_currentSpeed < targetSpeed) m_currentSpeed = targetSpeed;
+		}
 	}
 
 	void Player::processMovementInput(const Input& input, float deltaTime) noexcept
@@ -76,9 +97,11 @@ namespace core::entities
 		if (!m_crouching)
 			m_sprinting = input.isKeyPressed(Key::LeftShift) && m_onGround;
 
-		float speed = WALK_SPEED;
-		if (m_crouching)  speed = CROUCH_SPEED;
-		else if (m_sprinting) speed = SPRINT_SPEED;
+		float targetSpeed = WALK_SPEED;
+		if (m_crouching)      targetSpeed = CROUCH_SPEED;
+		else if (m_sprinting) targetSpeed = SPRINT_SPEED;
+
+		updateSprintSpeed(deltaTime, targetSpeed);
 
 		glm::vec3 forward = m_camera.getForward();
 		forward.y = 0.0f;
@@ -99,21 +122,14 @@ namespace core::entities
 
 		const float control = m_onGround ? 1.0f : AIR_CONTROL;
 
-		m_velocity.x = moveDir.x * speed * control;
-		m_velocity.z = moveDir.z * speed * control;
+		m_velocity.x = moveDir.x * m_currentSpeed * control;
+		m_velocity.z = moveDir.z * m_currentSpeed * control;
 
 		if (input.isKeyJustPressed(Key::Space) && m_onGround && !m_crouching)
 		{
 			m_velocity.y = JUMP_VELOCITY;
 			m_onGround = false;
 		}
-
-<<<<<<< HEAD
-		//(void)deltaTime;
-=======
-		// TODO: убрать deltaTime из параметров если он нигде больше не нужен
-		(void)deltaTime;
->>>>>>> feature/crouch-jump
 	}
 
 	void Player::applyPhysics(float deltaTime) noexcept
@@ -154,7 +170,7 @@ namespace core::entities
 
 		const physics::AABB standingAABB =
 		{
-			m_position + glm::vec3{ -halfWidth, 0.0f,         -halfWidth },
+			m_position + glm::vec3{ -halfWidth, 0.0f,          -halfWidth },
 			m_position + glm::vec3{  halfWidth, PLAYER_HEIGHT,  halfWidth }
 		};
 
@@ -166,8 +182,8 @@ namespace core::entities
 		constexpr float halfWidth = PLAYER_WIDTH * 0.5f;
 		return
 		{
-			m_position + glm::vec3{ -halfWidth, 0.0f,            -halfWidth },
-			m_position + glm::vec3{  halfWidth, m_currentHeight,  halfWidth }
+			m_position + glm::vec3{ -halfWidth, 0.0f,             -halfWidth },
+			m_position + glm::vec3{  halfWidth, m_currentHeight,   halfWidth }
 		};
 	}
 

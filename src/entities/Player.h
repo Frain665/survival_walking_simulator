@@ -24,6 +24,8 @@ namespace core::entities
 		static constexpr float AIR_CONTROL = 0.2f;
 
 		static constexpr float CROUCH_TRANSITION_SPEED = 10.0f;
+		static constexpr float SPRINT_ACCEL = 8.0f;
+		static constexpr float SPRINT_DECEL = 12.0f;
 
 		explicit Player(physics::PhysicsWorld& physicsWorld,
 			renderer::Camera& camera,
@@ -31,11 +33,11 @@ namespace core::entities
 
 		void update(const Input& input, float deltaTime) noexcept;
 
-		[[nodiscard]] auto getPosition()   const noexcept -> const glm::vec3& { return m_position; }
-		[[nodiscard]] auto getVelocity()   const noexcept -> const glm::vec3& { return m_velocity; }
-		[[nodiscard]] auto isOnGround()    const noexcept -> bool { return m_onGround; }
-		[[nodiscard]] auto isSprinting()   const noexcept -> bool { return m_sprinting; }
-		[[nodiscard]] auto isCrouching()   const noexcept -> bool { return m_crouching; }
+		[[nodiscard]] auto getPosition()  const noexcept -> const glm::vec3& { return m_position; }
+		[[nodiscard]] auto getVelocity()  const noexcept -> const glm::vec3& { return m_velocity; }
+		[[nodiscard]] auto isOnGround()   const noexcept -> bool { return m_onGround; }
+		[[nodiscard]] auto isSprinting()  const noexcept -> bool { return m_sprinting; }
+		[[nodiscard]] auto isCrouching()  const noexcept -> bool { return m_crouching; }
 
 		[[nodiscard]] physics::AABB getAABB() const noexcept;
 
@@ -51,19 +53,13 @@ namespace core::entities
 		void processMouseInput(const Input& input) noexcept;
 		void applyPhysics(float deltaTime) noexcept;
 		void updateCrouch(float deltaTime) noexcept;
-<<<<<<< HEAD
-
-		bool canUncrouch() const noexcept;
-=======
->>>>>>> feature/crouch-jump
+		void updateSprintSpeed(float deltaTime, float targetSpeed) noexcept;
 
 		bool canUncrouch() const noexcept;
 
-		// References (non-owning)
 		physics::PhysicsWorld& m_physicsWorld;
 		renderer::Camera& m_camera;
 
-<<<<<<< HEAD
 		glm::vec3 m_position{ 0.0f };
 		glm::vec3 m_velocity{ 0.0f };
 
@@ -71,24 +67,10 @@ namespace core::entities
 		bool  m_sprinting{ false };
 		bool  m_crouching{ false };
 
-		float m_currentHeight{ PLAYER_HEIGHT };
-		float m_currentEyeHeight{ EYE_HEIGHT };
-=======
-		// Physics state
-		glm::vec3 m_position{ 0.0f };
-		glm::vec3 m_velocity{ 0.0f };
-
-		// Movement state
-		bool  m_onGround{ false };
-		bool  m_sprinting{ false };
-		bool  m_crouching{ false };
->>>>>>> feature/crouch-jump
-
-		// Crouch interpolation
+		float m_currentSpeed{ WALK_SPEED };
 		float m_currentHeight{ PLAYER_HEIGHT };
 		float m_currentEyeHeight{ EYE_HEIGHT };
 
-		// Mouse state
 		glm::dvec2 m_lastMousePos{ 0.0, 0.0 };
 		bool       m_firstMouse{ true };
 	};
