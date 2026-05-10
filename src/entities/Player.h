@@ -54,19 +54,24 @@ namespace core::entities
 
 		bool canUncrouch() const noexcept;
 
+		// References (non-owning)
 		physics::PhysicsWorld& m_physicsWorld;
 		renderer::Camera& m_camera;
 
+		// Physics state
 		glm::vec3 m_position{ 0.0f };
 		glm::vec3 m_velocity{ 0.0f };
 
+		// Movement state
 		bool  m_onGround{ false };
 		bool  m_sprinting{ false };
 		bool  m_crouching{ false };
 
+		// Crouch interpolation
 		float m_currentHeight{ PLAYER_HEIGHT };
 		float m_currentEyeHeight{ EYE_HEIGHT };
 
+		// Mouse state
 		glm::dvec2 m_lastMousePos{ 0.0, 0.0 };
 		bool       m_firstMouse{ true };
 	};
