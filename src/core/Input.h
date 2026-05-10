@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 #include <bitset>
 
 #include <glm/glm.hpp>
@@ -32,31 +33,15 @@ namespace core
 		LeftAlt     = 342,
 
 		MouseLeft   = 0,
-		MouseRight  = 1, 
+		MouseRight  = 1,
 		MouseMiddle = 2,
 
-		// Функциональные клавиши
-		F1 = 290,
-		F2 = 291,
-		F3 = 292,
-		F4 = 293,
-		F5 = 294,
-		F6 = 295,
-		F7 = 296,
-		F8 = 297,
-		F9 = 298,
-		F10 = 299,
-		F11 = 300,
-		F12 = 301,
-
+		F1  = 290, F2  = 291, F3  = 292, F4  = 293,
+		F5  = 294, F6  = 295, F7  = 296, F8  = 297,
+		F9  = 298, F10 = 299, F11 = 300, F12 = 301,
 	};
 
-	enum class CursorMode
-	{
-		Normal,
-		Hidden,
-		Disabled
-	};
+	enum class CursorMode { Normal, Hidden, Disabled };
 
 	class Input final
 	{
@@ -64,60 +49,58 @@ namespace core
 		Input()  = default;
 		~Input() = default;
 
-		Input(const Input&) = delete;
-		Input(Input&&) noexcept = default;
-
-		auto operator=(const Input&)      -> Input& = delete;
-		auto operator=(Input&&) noexcept  -> Input& = default;
+		Input(const Input&)            = delete;
+		Input(Input&&) noexcept        = default;
+		auto operator=(const Input&)   -> Input& = delete;
+		auto operator=(Input&&) noexcept -> Input& = default;
 
 		void init(Window& window);
+
 		void update() noexcept;
 
 		[[nodiscard]] auto isKeyPressed(Key key) const noexcept -> bool
 		{
 			const auto idx = static_cast<size_t>(key);
-			return idx < m_currentKeys.size() && m_currentKeys.test(idx);
+			bool result = idx < KEY_COUNT && m_currentKeys.test(idx);
+			if (key == Key::LeftControl)
+				std::cout << "isKeyPressed LeftControl idx=" << idx << " result=" << result << "\n";
+			return result;
 		}
 
 		[[nodiscard]] auto isKeyJustPressed(Key key) const noexcept -> bool
 		{
 			const auto idx = static_cast<size_t>(key);
-			return idx < m_currentKeys.size() &&
-				m_currentKeys.test(idx) &&
-				!m_previousKeys.test(idx);
+			return idx < KEY_COUNT && m_justPressed.test(idx);
 		}
 
 		[[nodiscard]] auto isKeyJustReleased(Key key) const noexcept -> bool
 		{
 			const auto idx = static_cast<size_t>(key);
-			return idx < m_currentKeys.size() &&
-				!m_currentKeys.test(idx) &&
-				m_previousKeys.test(idx);
+			return idx < KEY_COUNT && m_justReleased.test(idx);
 		}
 
-		// === Состояние мыши ===
-
-		[[nodiscard]] auto getMousePosition() const noexcept -> glm::dvec2 { return m_mousePos;   }
-		[[nodiscard]] auto getMouseDelta()    const noexcept -> glm::dvec2 { return m_mouseDelta;  }
+		[[nodiscard]] auto getMousePosition() const noexcept -> glm::dvec2 { return m_mousePos;  }
+		[[nodiscard]] auto getMouseDelta()    const noexcept -> glm::dvec2 { return m_mouseDelta; }
 
 		void setCursorMode(CursorMode mode) noexcept;
 
-		friend void glfwKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
-		friend void glfwMouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
-		friend void glfwCursorPosCallback(GLFWwindow* window, double xpos, double ypos);
+		friend void glfwKeyCallback(GLFWwindow*, int, int, int, int);
+		friend void glfwMouseButtonCallback(GLFWwindow*, int, int, int);
+		friend void glfwCursorPosCallback(GLFWwindow*, double, double);
 
 	private:
 		static constexpr size_t KEY_COUNT = 512;
 
 		std::bitset<KEY_COUNT> m_currentKeys;
-		std::bitset<KEY_COUNT> m_previousKeys;
+		std::bitset<KEY_COUNT> m_justPressed;
+		std::bitset<KEY_COUNT> m_justReleased;
 
 		glm::dvec2 m_mousePos        { 0.0, 0.0 };
 		glm::dvec2 m_previousMousePos{ 0.0, 0.0 };
 		glm::dvec2 m_mouseDelta      { 0.0, 0.0 };
 
 		GLFWwindow* m_windowHandle{ nullptr };
-		bool m_firstMouse{ true };
+		bool        m_firstMouse  { true };
 	};
 
 } // namespace core

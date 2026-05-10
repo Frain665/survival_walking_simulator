@@ -16,7 +16,6 @@ namespace core::physics
 
 	void PhysicsWorld::removeStaticCollider(const AABB& box)
 	{
-		// Сравниваем по координатам с небольшим эпсилоном
 		constexpr float eps = 1e-4f;
 		auto it = std::remove_if(m_staticColliders.begin(), m_staticColliders.end(),
 			[&](const AABB& b)

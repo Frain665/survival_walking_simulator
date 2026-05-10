@@ -119,11 +119,11 @@ namespace core
 
             const float deltaTime = std::min<float>(frameDuration, MAX_DELTA_TIME);
 
+            m_window->pollEvents();
             processInput(deltaTime);
             update(deltaTime);
             render();
-
-            m_window->pollEvents();
+            m_input->update();
         }
 
         cleanup();
@@ -134,7 +134,7 @@ namespace core
     {
         if (!m_input) [[unlikely]] return;
 
-        m_input->update();
+        //m_input->update();
 
         if (m_input->isKeyJustPressed(Key::Escape))
             requestStop();

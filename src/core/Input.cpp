@@ -2,6 +2,7 @@
 
 #include "Window.h"
 #include <GLFW/glfw3.h>
+#include <iostream>
 
 namespace core
 {
@@ -9,20 +10,19 @@ namespace core
 	{
 		m_windowHandle = window.getNativeHandle();
 
+		glfwSetWindowUserPointer  (m_windowHandle, this);
 		glfwSetKeyCallback        (m_windowHandle, glfwKeyCallback);
 		glfwSetMouseButtonCallback(m_windowHandle, glfwMouseButtonCallback);
 		glfwSetCursorPosCallback  (m_windowHandle, glfwCursorPosCallback);
-
-		glfwSetWindowUserPointer(m_windowHandle, this);
 	}
 
 	void Input::update() noexcept
 	{
-		m_previousKeys    = m_currentKeys;
+		m_justPressed.reset();
+		m_justReleased.reset();
+
 		m_previousMousePos = m_mousePos;
-
 		glfwGetCursorPos(m_windowHandle, &m_mousePos.x, &m_mousePos.y);
-
 		m_mouseDelta.x = m_mousePos.x - m_previousMousePos.x;
 		m_mouseDelta.y = m_mousePos.y - m_previousMousePos.y;
 	}
@@ -48,17 +48,28 @@ namespace core
 		}
 	}
 
-	// === GLFW Колбэки ===
 	void glfwKeyCallback(GLFWwindow* window, int key, int /*scancode*/, int action, int /*mods*/)
 	{
+		std::cout << "KEY: " << key << " action: " << action << "\n";  // ВРЕМЕННО
+
 		auto* input = static_cast<Input*>(glfwGetWindowUserPointer(window));
 		if (!input) return;
 
-		if (key >= 0 && key < static_cast<int>(input->KEY_COUNT))
+		const auto idx = static_cast<size_t>(key);
+		if (key < 0 || idx >= Input::KEY_COUNT) return;
+
+		if (action == GLFW_PRESS)
 		{
-			const bool pressed = (action == GLFW_PRESS || action == GLFW_REPEAT);
-			input->m_currentKeys.set(static_cast<size_t>(key), pressed);
+			input->m_currentKeys.set(idx);
+			input->m_justPressed.set(idx);
 		}
+		else if (action == GLFW_RELEASE)
+		{
+			input->m_currentKeys.reset(idx);
+			input->m_justReleased.set(idx);
+		}
+		
+		if (key == 341) std::cout << "CTRL: action = " << action << "\n";
 	}
 
 	void glfwMouseButtonCallback(GLFWwindow* window, int button, int action, int /*mods*/)
@@ -66,10 +77,18 @@ namespace core
 		auto* input = static_cast<Input*>(glfwGetWindowUserPointer(window));
 		if (!input) return;
 
-		if (button >= 0 && button < static_cast<int>(input->KEY_COUNT))
+		const auto idx = static_cast<size_t>(button);
+		if (button < 0 || idx >= Input::KEY_COUNT) return;
+
+		if (action == GLFW_PRESS)
 		{
-			const bool pressed = (action == GLFW_PRESS);
-			input->m_currentKeys.set(static_cast<size_t>(button), pressed);
+			input->m_currentKeys.set(idx);
+			input->m_justPressed.set(idx);
+		}
+		else if (action == GLFW_RELEASE)
+		{
+			input->m_currentKeys.reset(idx);
+			input->m_justReleased.set(idx);
 		}
 	}
 
@@ -81,7 +100,7 @@ namespace core
 		if (input->m_firstMouse)
 		{
 			input->m_mousePos         = { xpos, ypos };
-			input->m_previousMousePos = input->m_mousePos;
+			input->m_previousMousePos = { xpos, ypos };
 			input->m_firstMouse       = false;
 		}
 
