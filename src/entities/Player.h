@@ -51,12 +51,19 @@ namespace core::entities
 		void processMouseInput(const Input& input) noexcept;
 		void applyPhysics(float deltaTime) noexcept;
 		void updateCrouch(float deltaTime) noexcept;
+<<<<<<< HEAD
+
+		bool canUncrouch() const noexcept;
+=======
+>>>>>>> feature/crouch-jump
 
 		bool canUncrouch() const noexcept;
 
+		// References (non-owning)
 		physics::PhysicsWorld& m_physicsWorld;
 		renderer::Camera& m_camera;
 
+<<<<<<< HEAD
 		glm::vec3 m_position{ 0.0f };
 		glm::vec3 m_velocity{ 0.0f };
 
@@ -66,7 +73,22 @@ namespace core::entities
 
 		float m_currentHeight{ PLAYER_HEIGHT };
 		float m_currentEyeHeight{ EYE_HEIGHT };
+=======
+		// Physics state
+		glm::vec3 m_position{ 0.0f };
+		glm::vec3 m_velocity{ 0.0f };
 
+		// Movement state
+		bool  m_onGround{ false };
+		bool  m_sprinting{ false };
+		bool  m_crouching{ false };
+>>>>>>> feature/crouch-jump
+
+		// Crouch interpolation
+		float m_currentHeight{ PLAYER_HEIGHT };
+		float m_currentEyeHeight{ EYE_HEIGHT };
+
+		// Mouse state
 		glm::dvec2 m_lastMousePos{ 0.0, 0.0 };
 		bool       m_firstMouse{ true };
 	};

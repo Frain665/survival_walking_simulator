@@ -108,7 +108,12 @@ namespace core::entities
 			m_onGround = false;
 		}
 
+<<<<<<< HEAD
 		//(void)deltaTime;
+=======
+		// TODO: убрать deltaTime из параметров если он нигде больше не нужен
+		(void)deltaTime;
+>>>>>>> feature/crouch-jump
 	}
 
 	void Player::applyPhysics(float deltaTime) noexcept
